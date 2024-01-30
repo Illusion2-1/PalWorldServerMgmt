@@ -1,0 +1,21 @@
+<Config>
+    <Kook>
+        <KookEnable>nullable bool, default to false</KookEnable>
+        <BaseUrl>nullable url, default to www.kookapp.cn;</BaseUrl>
+        <RequestPath>nullable string, default to api/v3/message/create;</RequestPath>
+        <UseSSL>bool value, default to true;</UseSSL>
+        <Authorization>not null string;</Authorization>
+        <PostType>not null int;</PostType>
+        <TargetID>not null string;</TargetID>
+        <CustomContent>nullable string;</CustomContent>
+    </Kook>
+    <PalWorld>
+        <SrcFolder>not null path string;</SrcFolder>
+        <TgtFolder>not null path string;</TgtFolder>
+        <SteamCmdExecPath>not null path string, requires a executable file;</SteamCmdExecPath>
+        <PalWorldExecPath>not null path string, requires a executable file;</PalWorldExecPath>
+        <MemThreshold>nullable percentage double ranges from 0.0 to 1.0, default to 0.9;</MemThreshold>
+        <CustomPort>nullable int, default to 8211 when null;</CustomPort>
+        <DoUpdate>nullable bool value, default to true;</DoUpdate>
+    </PalWorld>
+</Config>
