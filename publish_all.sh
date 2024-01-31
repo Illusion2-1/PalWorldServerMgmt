@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # Set variables
-PROJECT_DIR="$(pwd)"
-CONFIG_FILE="src/config.xml"
-TARGET_DIR="$PROJECT_DIR/output"
-ARCHIVE_DIR="$PROJECT_DIR/archives"
+PROJECT_NAME="PalWorldServerMG"
+CONFIG_FILE_NAME="config.xml"
+CONFIG_FILE_PATH="src/$CONFIG_FILE_NAME"
+PUBLISH_DIR_BASE="bin/Release/net6.0"
+TARGET_DIR="deployments"
 
 # Check and install .NET SDK 6.0+
 function check_and_install_dotnet() {
@@ -44,40 +45,42 @@ fi
 # Install .NET SDK if required
 check_and_install_dotnet "$OS"
 
-# Create directories
-mkdir -p "$TARGET_DIR"
-mkdir -p "$ARCHIVE_DIR"
-
-# Build and publish
-function build_and_publish() {
+# Function to publish and organize files
+publish_and_organize() {
     local RID="$1"
     local SELF_CONTAINED="$2"
-    local OUTPUT_DIR="$TARGET_DIR/$RID"
-    local FILE_SUFFIX="Framework-dependent"
+    local PUBLISH_DIR="$PUBLISH_DIR_BASE/$RID/publish"
+    local DEPLOYMENT_SUBDIR="$RID-$( [ "$SELF_CONTAINED" = "true" ] && echo 'self-contained' || echo 'framework-dependent')"
+    local DEPLOYMENT_DIR="$TARGET_DIR/$DEPLOYMENT_SUBDIR"
 
-    if [ "$SELF_CONTAINED" = "true" ]; then
-        FILE_SUFFIX="Self-contained"
-    fi
+    # Publish the project
+    dotnet publish -c Release -r "$RID" --self-contained "$SELF_CONTAINED" -p:PublishSingleFile=true
 
-    local ARCHIVE_NAME="$ARCHIVE_DIR/$RID-$FILE_SUFFIX.zip"
+    # Create the deployment directory
+    mkdir -p "$DEPLOYMENT_DIR"
 
-    echo "Building and publishing for $RID with Self-contained: $SELF_CONTAINED..."
-    mkdir -p "$OUTPUT_DIR"
-    cp "$CONFIG_FILE" "$OUTPUT_DIR"
-    dotnet publish -c Release -r "$RID" --self-contained "$SELF_CONTAINED" -p:PublishSingleFile=true -o "$OUTPUT_DIR"
+    # Copy the build output to the deployment directory
+    cp -r "$PUBLISH_DIR/$PROJECT_NAME"* "$DEPLOYMENT_DIR"
 
-    # Compress the output directory
-    if [ "$SELF_CONTAINED" = "true" ]; then
-        zip -r "$ARCHIVE_NAME" "$OUTPUT_DIR"
-    else
-        tar -czvf "$ARCHIVE_NAME" -C "$OUTPUT_DIR" .
-    fi
+    # Copy the config file to the deployment directory
+    cp "$PUBLISH_DIR/$CONFIG_FILE_PATH" "$DEPLOYMENT_DIR"
+
+    echo "Deployment for $RID created at $DEPLOYMENT_DIR"
 }
 
-# Build for all required configurations
-build_and_publish "win-x64" "false"
-build_and_publish "linux-x64" "false"
-build_and_publish "win-x64" "true"
-build_and_publish "linux-x64" "true"
+# Create base target directory
+mkdir -p "$TARGET_DIR"
 
-echo "Build and publish completed."
+# Publish and organize for Linux (framework-dependent)
+publish_and_organize "linux-x64" "false"
+
+# Publish and organize for Windows (framework-dependent)
+publish_and_organize "win-x64" "false"
+
+# Publish and organize for Linux (self-contained)
+publish_and_organize "linux-x64" "true"
+
+# Publish and organize for Windows (self-contained)
+publish_and_organize "win-x64" "true"
+
+echo "All builds have been published and organized."
