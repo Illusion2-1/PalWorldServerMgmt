@@ -59,11 +59,13 @@ publish_and_organize() {
     # Create the deployment directory
     mkdir -p "$DEPLOYMENT_DIR"
 
-    # Copy the build output to the deployment directory
-    cp -r "$PUBLISH_DIR/$PROJECT_NAME"* "$DEPLOYMENT_DIR"
+    # Copy the entire publish directory contents to the deployment directory
+    cp -r "$PUBLISH_DIR/"* "$DEPLOYMENT_DIR"
 
-    # Copy the config file to the deployment directory
-    cp "$PUBLISH_DIR/$CONFIG_FILE_PATH" "$DEPLOYMENT_DIR"
+    # Ensure the config file is copied to the deployment directory
+    if [ ! -f "$DEPLOYMENT_DIR/$CONFIG_FILE_NAME" ]; then
+        cp "$PUBLISH_DIR/$CONFIG_FILE_PATH" "$DEPLOYMENT_DIR"
+    fi
 
     echo "Deployment for $RID created at $DEPLOYMENT_DIR"
 }
