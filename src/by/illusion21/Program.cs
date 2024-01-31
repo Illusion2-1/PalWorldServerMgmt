@@ -36,7 +36,7 @@ internal abstract class PalWorldServerMg {
         var daemonTask = Task.Run(() => daemon!.Run());
         await Task.WhenAll(commandHandlerTask, daemonTask);
         Log.WriteLine("Exiting main thread", LogType.Warn);
-        }
+    }
 
 
     private static void ConfigureService(IServiceCollection services, string platform) {
