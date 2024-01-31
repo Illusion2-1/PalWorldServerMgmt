@@ -67,7 +67,7 @@ public class LinuxDaemon : IDaemon {
         Task.Run(() => {
             ProcessHandler.RunProcess(_serverExePath, $"port={_serverPort} -useperfthreads -NoAsyncLoadingThread -UseMultiTHreadForDS");
             Log.WriteLine("Exiting process thread", LogType.Warn);
-            cts.Cancel();
+            if (!_isRunning) cts.Cancel();
         });
     }
 
