@@ -8,7 +8,7 @@ public class CommandEventHandler : ICommandEventHandler {
     private IDaemon _daemon = null!;
 
     public void SubscribeToEvents(EventBus<CommandEventType> eventBus) {
-        Log.WriteLine("Registering subscriber", LogType.Warn);
+        Log.WriteLine("Subscribing to events", LogType.Warn);
         eventBus.Subscribe(CommandEventType.EventExit, _ => {
             _daemon.IsRunning = false;
             _daemon.TerminateProcess();

@@ -16,9 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="src\by\illusion21\.res\config.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="src\config.xml">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
