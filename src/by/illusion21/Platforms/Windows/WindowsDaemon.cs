@@ -148,6 +148,7 @@ public class WindowsDaemon : IDaemon {
                 await Task.Delay(600000, cts.Token);
             } catch (Exception) {
                 Log.WriteLine("Cancelled loop", LogType.Info);
+                break;
             }
         }
     }

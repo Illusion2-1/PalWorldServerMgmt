@@ -132,8 +132,12 @@ public class LinuxDaemon : IDaemon {
     }
 
     private async Task StartServerLoop() {
-        ProcessHandler.RunProcess(_steamcmdPath,
-            $"+force_install_dir \"{Path.GetDirectoryName(_serverExePath)}\" +login anonymous +app_update 2394010 validate +quit");
+        await Task.Run(() => {
+            if (!PalWorldServerMg.Config!.ValueOf<bool>("PalWorld", "DoUpdate")) return;
+            Log.WriteLine("Trying to fetch update from steam content server", LogType.Info);
+            ProcessHandler.RunProcess(_steamcmdPath,
+                $"+force_install_dir \"{Path.GetDirectoryName(_serverExePath)}\" +login anonymous +app_update 2394010 validate +quit");
+        });
         RunServer();
 
         while (_isRunning)
@@ -143,6 +147,7 @@ public class LinuxDaemon : IDaemon {
                 await Task.Delay(600000, cts.Token);
             } catch (Exception) {
                 Log.WriteLine("Cancelled loop", LogType.Info);
+                break;
             }
     }
 

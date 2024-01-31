@@ -7,6 +7,7 @@ public class ConfigSection {
 }
 
 public class ConfigHandler {
+    private static bool _kookEnabled;
     private static readonly Dictionary<string, ConfigSection> ConfigSections = new();
 
     private static readonly Dictionary<string, Func<string, object?>> KeyHandlers = new() {
@@ -14,9 +15,9 @@ public class ConfigHandler {
         { "BaseUrl", s => CheckUrl(s, "www.kookapp.cn") },
         { "RequestPath", s => CheckString(s, "api/v3/message/create") },
         { "UseSSL", s => CheckBool(s, true) },
-        { "Authorization", CheckRequiredString },
+        { "Authorization", CheckKookRequiredString },
         { "PostType", s => CheckRequiredInt(s) },
-        { "TargetID", CheckRequiredString },
+        { "TargetID", CheckKookRequiredString },
         { "CustomContent", s => CheckString(s, null) },
         { "SrcFolder", CheckRequiredPath },
         { "TgtFolder", CheckRequiredPath },
@@ -32,7 +33,13 @@ public class ConfigHandler {
 
         var xDoc = XDocument.Load("config.xml");
         var config = xDoc.Element("Config");
-
+        var kookSection = config?.Elements("Kook").FirstOrDefault();
+        if (kookSection != null) {
+            var kookEnableElement = kookSection.Element("KookEnable");
+            if (kookEnableElement != null) {
+                bool.TryParse(kookEnableElement.Value, out _kookEnabled);
+            }
+        }
         foreach (var section in config!.Elements()) {
             var sectionName = section.Name.LocalName;
             if (!ConfigSections.TryGetValue(sectionName, out var sectionValues)) {
@@ -57,11 +64,13 @@ public class ConfigHandler {
         throw new KeyNotFoundException($"Config key '{key}' not found in section '{section}'.");
     }
 
-    private static string CheckRequiredString(string value) {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Config key requires a non-empty string value.");
-
-        return value;
+    private static string CheckKookRequiredString(string value) {
+        if (_kookEnabled) {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException("Config key requires a non-empty string value.");
+            return value;
+        }
+        return string.Empty;
     }
 
     private static int CheckRequiredInt(string value) {
