@@ -25,6 +25,6 @@ public class ProcessHandler {
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         process.WaitForExit();
-        Log.WriteLine($"Process exited with code {process.ExitCode}", LogType.Warn);
+        Log.WriteLine($"Process exited with code: {process.ExitCode}", LogType.Warn);
     }
 }

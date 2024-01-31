@@ -6,5 +6,4 @@ public enum CommandEventType {
     EventStat,
     EventBackup,
     EventRestartCallback,
-    EventExitCallback
 }

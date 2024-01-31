@@ -12,7 +12,6 @@ public class CommandEventHandler : ICommandEventHandler {
         eventBus.Subscribe(CommandEventType.EventExit, _ => {
             _daemon.IsRunning = false;
             _daemon.TerminateProcess();
-            eventBus.Publish(CommandEventType.EventExitCallback);
             Log.WriteLine("Exiting");
         });
 
@@ -33,9 +32,9 @@ public class CommandEventHandler : ICommandEventHandler {
             var memInfo = _daemon.GetMemoryInfo();
             Log.Write($"总内存{memInfo.TotalMemory}MiB" +
                       $"\n已使用{memInfo.PercentUsedMemory}%" +
-                      $"（{memInfo.PercentUsedMemory * memInfo.TotalMemory * 0.01:N2}MiB）" +
-                      $"\n可用{memInfo.TotalMemory - memInfo.PercentUsedMemory * memInfo.TotalMemory * 0.01:N2}MiB" +
-                      $"\n内存阈值{memInfo.TotalMemory * PalWorldServerMg.Config!.ValueOf<double>("PalWorld", "MemThreshold")}MiB");
+                      $"（{(memInfo.PercentUsedMemory * memInfo.TotalMemory * 0.01):0.00}MiB）" +
+                      $"\n可用{(memInfo.TotalMemory - memInfo.PercentUsedMemory * memInfo.TotalMemory * 0.01):0.00}MiB" +
+                      $"\n内存阈值{(memInfo.TotalMemory * PalWorldServerMg.Config!.ValueOf<double>("PalWorld", "MemThreshold")):0.00}MiB");
         });
     }
 

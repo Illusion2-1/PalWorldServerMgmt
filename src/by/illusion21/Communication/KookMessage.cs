@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using by.illusion21.Services.Common.Types;
 using by.illusion21.Utilities.Common;
 using Newtonsoft.Json;
 
@@ -8,11 +9,11 @@ namespace by.illusion21.Communication;
 public class KookMessage {
     private static readonly HttpClient HttpClient = new();
 
-    public async Task<bool> SendMessageAsync(string message) {
+    public async Task<MessageStatus> SendMessageAsync(string message) {
         Debug.Assert(PalWorldServerMg.Config != null, "PalWorldServerMg.Config != null");
         if (!PalWorldServerMg.Config.ValueOf<bool>("Kook", "KookEnable")) {
             Log.WriteLine("Kook pushing feature is disabled by configuration");
-            return false;
+            return MessageStatus.Undefined;
         }
 
         var requestUrl = PalWorldServerMg.Config.ValueOf<string>("Kook", "BaseUrl");
@@ -37,7 +38,7 @@ public class KookMessage {
         var responseContent = await response.Content.ReadAsStringAsync();
         var responseData = JsonConvert.DeserializeObject<KookResponseData>(responseContent);
 
-        return responseData != null && response.IsSuccessStatusCode && responseData.Code == 0;
+        return responseData != null && response.IsSuccessStatusCode && responseData.Code == 0 ? MessageStatus.Successful : MessageStatus.Failed;
     }
 }
 

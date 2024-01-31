@@ -34,12 +34,9 @@ internal abstract class PalWorldServerMg {
         var commandHandler = new CommandHandler(_eventBus);
         var commandHandlerTask = Task.Run(() => commandHandler.StartAsync());
         var daemonTask = Task.Run(() => daemon!.Run());
-        try {
-            await Task.WhenAll(commandHandlerTask, daemonTask);
-        } catch (Exception) {
-            Log.WriteLine("Exiting main thread", LogType.Warn);
+        await Task.WhenAll(commandHandlerTask, daemonTask);
+        Log.WriteLine("Exiting main thread", LogType.Warn);
         }
-    }
 
 
     private static void ConfigureService(IServiceCollection services, string platform) {

@@ -30,11 +30,11 @@ public class CommandHandler {
             }
         });
         await task;
-        Log.WriteLine("Exiting command handler thread.", LogType.Warn);
+        Log.WriteLine("Exiting CommandHandler thread.", LogType.Warn);
     }
 
     private void RegisterCommands() {
-        Log.WriteLine("Registering publisher", LogType.Warn);
+        Log.WriteLine("CommandHandler thread: registering commands", LogType.Warn);
         _commands["exit"] = async _ => {
             _isRunning = false;
             _eventBus.Publish(CommandEventType.EventExit);
@@ -52,7 +52,6 @@ public class CommandHandler {
         };
 
         _commands["stats"] = async _ => {
-            Log.WriteLine("Trying to publish", LogType.Warn);
             _eventBus.Publish(CommandEventType.EventStat);
             await Task.CompletedTask;
         };
@@ -64,7 +63,7 @@ public class CommandHandler {
         };
 
         _commands["echo"] = async args => {
-            if (await PalWorldServerMg.Channel.SendMessageAsync(string.Join(" ", args)))
+            if (await PalWorldServerMg.Channel.SendMessageAsync(string.Join(" ", args)) == MessageStatus.Successful)
                 Log.WriteLine("Message sent", LogType.Info);
             else
                 Log.WriteLine("Failed sending message", LogType.Error);

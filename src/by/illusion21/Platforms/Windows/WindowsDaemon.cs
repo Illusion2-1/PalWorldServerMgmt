@@ -40,7 +40,7 @@ public class WindowsDaemon : IDaemon {
     }
 
     async Task IDaemon.Backup() {
-        var timestamp = DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss");
+        var timestamp = DateTime.Now.ToString("yyyy.MM.dd-HH:mm:ss");
         var backupFileName = $"{timestamp}-Save.zip";
         var backupFilePath = Path.Combine(_backupFolder, backupFileName);
         using (var zip = new ZipArchive(File.Create(backupFilePath), ZipArchiveMode.Create)) {
@@ -53,33 +53,38 @@ public class WindowsDaemon : IDaemon {
 
         var usedMemory = ((IDaemon)this).GetMemoryInfo().PercentUsedMemory;
         var totalMemory = ((IDaemon)this).GetMemoryInfo().TotalMemory;
-        if (await PalWorldServerMg.Channel.SendMessageAsync(
-                $"A backup has been created as {timestamp}-Save.zip\nThe server is currently consuming {usedMemory}% of {totalMemory}MiB\n"))
+        var messageStatus = await PalWorldServerMg.Channel.SendMessageAsync(
+            $"A backup has been created as {timestamp}-Save.zip\nThe server is currently consuming {usedMemory}% of {totalMemory}MiB\n");
+        if (messageStatus == MessageStatus.Successful)
             Log.WriteLine("A backup message has been sent to channel successfully", LogType.Info);
-        else
+        else if (messageStatus == MessageStatus.Failed)
             Log.WriteLine("An attempt at sending backup message to channel seemed failed", LogType.Error);
         Log.WriteLine($"Backup stored to {backupFilePath}", LogType.Info);
     }
 
     void IDaemon.RunServer() {
         Log.WriteLine("Making an attempt to start up server.", LogType.Info);
-        Task.Run(() => { ProcessHandler.RunProcess(_serverExePath, $"port={_serverPort} -useperfthreads -NoAsyncLoadingThread -UseMultiTHreadForDS"); });
+        Task.Run(() => {
+            ProcessHandler.RunProcess(_serverExePath, $"port={_serverPort} -useperfthreads -NoAsyncLoadingThread -UseMultiTHreadForDS"); 
+            Log.WriteLine("Exiting process thread", LogType.Warn);
+            cts.Cancel();
+        });
     }
 
     async Task IDaemon.CheckMemory() {
         var memoryInfo = ((IDaemon)this).GetMemoryInfo();
         if (memoryInfo.PercentUsedMemory * 0.01 >= _memoryThreshold) {
-            if (await PalWorldServerMg.Channel.SendMessageAsync($"Memory usage {memoryInfo.PercentUsedMemory * memoryInfo.TotalMemory * 0.01}MiB "
-                                                                + "is hitting the threshold "
-                                                                + _memoryThreshold * memoryInfo.TotalMemory
-                                                                + "MiB\nThe server will restart in 30 seconds."))
+            var messageStatus = await PalWorldServerMg.Channel.SendMessageAsync($"Memory usage {memoryInfo.PercentUsedMemory * memoryInfo.TotalMemory * 0.01}MiB "
+                                                                                + "is hitting the threshold "
+                                                                                + _memoryThreshold * memoryInfo.TotalMemory
+                                                                                + "MiB\nThe server will restart in 30 seconds.");
+            if (messageStatus == MessageStatus.Successful)
                 Log.WriteLine("A restart warning has been sent to channel successfully", LogType.Info);
-            else
+            else if (messageStatus == MessageStatus.Failed)
                 Log.WriteLine("An attempt at sending restart warning to channel seemed failed", LogType.Error);
+            Task.Delay(30000).Wait();
+            ((IDaemon)this).Restart();
         }
-
-        Task.Delay(30000).Wait();
-        ((IDaemon)this).Restart();
     }
 
     void IDaemon.Restart() {
