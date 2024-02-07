@@ -42,13 +42,15 @@ internal abstract class PalWorldServerMg {
     private static void ConfigureService(IServiceCollection services, string platform) {
         services.AddSingleton(_eventBus);
         services.AddTransient<ICommandEventHandler, CommandEventHandler>();
-        switch (platform) {
-            case "Windows":
-                services.AddTransient<IDaemon, WindowsDaemon>();
-                break;
-            case "Linux":
-                services.AddTransient<IDaemon, LinuxDaemon>();
-                break;
-        }
+#if WINDOWS
+    if (platform == "Windows") {
+        services.AddTransient<IDaemon, WindowsDaemon>();
+    }
+#endif
+#if LINUX
+    if (platform == "Linux") {
+        services.AddTransient<IDaemon, LinuxDaemon>();
+    }
+#endif
     }
 }

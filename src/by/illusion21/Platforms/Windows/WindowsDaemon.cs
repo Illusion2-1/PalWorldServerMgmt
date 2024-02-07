@@ -8,6 +8,8 @@ using by.illusion21.Utilities.Common;
 namespace by.illusion21.Platforms.Windows;
 
 // ReSharper disable InconsistentNaming
+
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public class WindowsDaemon : IDaemon {
     private static bool _isRunning = true;
     private readonly string _backupFolder = PalWorldServerMg.Config!.ValueOf<string>("PalWorld", "TgtFolder");
