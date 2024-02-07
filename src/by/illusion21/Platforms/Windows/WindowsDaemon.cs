@@ -20,8 +20,8 @@ public class WindowsDaemon : IDaemon {
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
     private EventBus<CommandEventType> _eventBus;
     private ICommandEventHandler? _eventHandler;
-    private readonly CancellationTokenSource cts = new();
-
+    private readonly CancellationTokenSource ShutdownCts = new();
+    private CancellationTokenSource RestartCts = new();
     public WindowsDaemon(EventBus<CommandEventType> eventBus, ICommandEventHandler eventHandler) {
         _eventBus = eventBus;
         _eventHandler = eventHandler;
@@ -67,7 +67,8 @@ public class WindowsDaemon : IDaemon {
         Task.Run(() => {
             ProcessHandler.RunProcess(_serverExePath, $"port={_serverPort} -useperfthreads -NoAsyncLoadingThread -UseMultiTHreadForDS"); 
             Log.WriteLine("Exiting process thread", LogType.Warn);
-            if (!_isRunning) cts.Cancel();
+            if (!_isRunning) ShutdownCts.Cancel();
+            RestartCts.Cancel();
         });
     }
 
@@ -88,8 +89,9 @@ public class WindowsDaemon : IDaemon {
     }
 
     void IDaemon.Restart() {
+        RestartCts = new CancellationTokenSource(); // Reset cancel status
         ((IDaemon)this).KillProcess("PalServer");
-        Task.Delay(5000).Wait();
+        Task.Delay(30000, RestartCts.Token).Wait();
         ((IDaemon)this).RunServer();
     }
 
@@ -145,7 +147,7 @@ public class WindowsDaemon : IDaemon {
             try {
                 await ((IDaemon)this).Backup();
                 await ((IDaemon)this).CheckMemory();
-                await Task.Delay(600000, cts.Token);
+                await Task.Delay(600000, ShutdownCts.Token);
             } catch (Exception) {
                 Log.WriteLine("Cancelled loop", LogType.Info);
                 break;
