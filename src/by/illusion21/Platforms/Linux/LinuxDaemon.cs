@@ -20,7 +20,8 @@ public class LinuxDaemon : IDaemon {
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
     private EventBus<CommandEventType> _eventBus;
     private ICommandEventHandler _eventHandler;
-    private readonly CancellationTokenSource cts = new();
+    private readonly CancellationTokenSource shutdownCts = new();
+    private CancellationTokenSource restartCts = new();
 
     public LinuxDaemon(EventBus<CommandEventType> eventBus, ICommandEventHandler eventHandler) {
         _eventBus = eventBus;
@@ -67,7 +68,8 @@ public class LinuxDaemon : IDaemon {
         Task.Run(() => {
             ProcessHandler.RunProcess(_serverExePath, $"port={_serverPort} -useperfthreads -NoAsyncLoadingThread -UseMultiTHreadForDS");
             Log.WriteLine("Exiting process thread", LogType.Warn);
-            cts.Cancel();
+            if (!_isRunning) shutdownCts.Cancel();
+            restartCts.Cancel();
         });
     }
 
@@ -82,14 +84,17 @@ public class LinuxDaemon : IDaemon {
                 Log.WriteLine("A restart warning has been sent to channel successfully", LogType.Info);
             else if (messageStatus == MessageStatus.Failed)
                 Log.WriteLine("An attempt at sending restart warning to channel seemed failed", LogType.Error);
+            else
+                Log.WriteLine("Threshold reached. Daemon will try to restart in 30s.", LogType.Warn);
             Task.Delay(30000).Wait();
             ((IDaemon)this).Restart();
         }
     }
 
     void IDaemon.Restart() {
+        restartCts = new CancellationTokenSource(); // Reset cancel status
         ((IDaemon)this).TerminateProcess();
-        Task.Delay(5000).Wait();
+        Task.Delay(30000, restartCts.Token).Wait();
         RunServer();
     }
 
@@ -132,17 +137,22 @@ public class LinuxDaemon : IDaemon {
     }
 
     private async Task StartServerLoop() {
-        ProcessHandler.RunProcess(_steamcmdPath,
-            $"+force_install_dir \"{Path.GetDirectoryName(_serverExePath)}\" +login anonymous +app_update 2394010 validate +quit");
+        await Task.Run(() => {
+            if (!PalWorldServerMg.Config!.ValueOf<bool>("PalWorld", "DoUpdate")) return;
+            Log.WriteLine("Trying to fetch update from steam content server", LogType.Info);
+            ProcessHandler.RunProcess(_steamcmdPath,
+                $"+force_install_dir \"{Path.GetDirectoryName(_serverExePath)}\" +login anonymous +app_update 2394010 validate +quit");
+        });
         RunServer();
 
         while (_isRunning)
             try {
                 await ((IDaemon)this).Backup();
                 await ((IDaemon)this).CheckMemory();
-                await Task.Delay(600000, cts.Token);
+                await Task.Delay(600000, shutdownCts.Token);
             } catch (Exception) {
                 Log.WriteLine("Cancelled loop", LogType.Info);
+                break;
             }
     }
 
