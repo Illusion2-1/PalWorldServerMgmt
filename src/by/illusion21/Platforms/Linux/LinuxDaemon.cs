@@ -150,8 +150,11 @@ public class LinuxDaemon : IDaemon {
                 await ((IDaemon)this).Backup();
                 await ((IDaemon)this).CheckMemory();
                 await Task.Delay(600000, shutdownCts.Token);
-            } catch (Exception) {
-                Log.WriteLine("Cancelled loop", LogType.Info);
+            } catch (Exception e) {
+                Log.WriteLine($"Cancelled loop\n Is scheduled cancellation: {!_isRunning}\n" +
+                              $"is shutdownCts cancelled: {shutdownCts.IsCancellationRequested}\n" +
+                              $"is restartCts cancelled: {restartCts.IsCancellationRequested}\n" +
+                              $"Detailed exception: {e.Message}", LogType.Info);
                 break;
             }
     }
