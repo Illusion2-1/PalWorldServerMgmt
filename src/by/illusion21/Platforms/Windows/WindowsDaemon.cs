@@ -146,14 +146,10 @@ public class WindowsDaemon : IDaemon {
 
         ((IDaemon)this).RunServer();
         while (_isRunning) {
-            try {
-                await ((IDaemon)this).Backup();
-                await ((IDaemon)this).CheckMemory();
-                await Task.Delay(600000, ShutdownCts.Token);
-            } catch (Exception) {
-                Log.WriteLine("Cancelled loop", LogType.Info);
-                break;
-            }
+            await ((IDaemon)this).Backup();
+            await ((IDaemon)this).CheckMemory();
+            await Task.Delay(600000, ShutdownCts.Token);
+            if (ShutdownCts.IsCancellationRequested) break;
         }
     }
 }

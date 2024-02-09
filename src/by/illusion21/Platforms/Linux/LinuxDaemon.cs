@@ -145,18 +145,12 @@ public class LinuxDaemon : IDaemon {
         });
         RunServer();
 
-        while (_isRunning)
-            try {
-                await ((IDaemon)this).Backup();
-                await ((IDaemon)this).CheckMemory();
-                await Task.Delay(600000, shutdownCts.Token);
-            } catch (Exception e) {
-                Log.WriteLine($"Cancelled loop\n Is scheduled cancellation: {!_isRunning}\n" +
-                              $"is shutdownCts cancelled: {shutdownCts.IsCancellationRequested}\n" +
-                              $"is restartCts cancelled: {restartCts.IsCancellationRequested}\n" +
-                              $"Detailed exception: {e.Message}", LogType.Info);
-                break;
-            }
+        while (_isRunning) {
+            await ((IDaemon)this).Backup();
+            await ((IDaemon)this).CheckMemory();
+            await Task.Delay(600000, shutdownCts.Token);
+            if (shutdownCts.IsCancellationRequested) break;
+        }
     }
 
     private static string? RunBashCommand(string command) {
