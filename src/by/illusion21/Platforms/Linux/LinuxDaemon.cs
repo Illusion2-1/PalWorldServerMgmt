@@ -177,8 +177,8 @@ public class LinuxDaemon : IDaemon {
         RunServer();
 
 #pragma warning disable CS4014
-        var backupTask = Task.Run(() => ((IDaemon)this).Backup(180000, shutdownCts.Token,false));
-        var checkMemTask = Task.Run(() => ((IDaemon)this).CheckMemory(10000, shutdownCts.Token));
+        var backupTask = Task.Run(() => ((IDaemon)this).Backup(1800000, shutdownCts.Token,false));
+        var checkMemTask = Task.Run(() => ((IDaemon)this).CheckMemory(60000, shutdownCts.Token));
         Task.WaitAll(backupTask, checkMemTask);
         Log.WriteLine("Daemon threads are exited", LogType.Warn);
     }
