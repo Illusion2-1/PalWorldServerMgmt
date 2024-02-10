@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text;
 using by.illusion21.Services.Common.Types;
-using by.illusion21.Utilities.Common;
 using Newtonsoft.Json;
 
 namespace by.illusion21.Communication;
@@ -12,7 +11,6 @@ public class KookMessage {
     public async Task<MessageStatus> SendMessageAsync(string message) {
         Debug.Assert(PalWorldServerMg.Config != null, "PalWorldServerMg.Config != null");
         if (!PalWorldServerMg.Config.ValueOf<bool>("Kook", "KookEnable")) {
-            Log.WriteLine("Kook pushing feature is disabled by configuration");
             return MessageStatus.Undefined;
         }
 

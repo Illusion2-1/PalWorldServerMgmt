@@ -4,9 +4,9 @@ namespace by.illusion21.Platforms;
 public interface IDaemon {
     bool IsRunning { get; set; }
     Task Run();
-    Task Backup();
+    Task Backup(int millisecondsDelay, CancellationToken stopToken, bool isOneshot);
     void RunServer();
-    Task CheckMemory();
+    Task CheckMemory(int millisecondsDelay, CancellationToken stopToken);
     void Restart();
     void TerminateProcess();
     void KillProcess(string processName);

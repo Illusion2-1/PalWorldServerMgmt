@@ -18,14 +18,13 @@ public class CommandEventHandler : ICommandEventHandler {
         eventBus.Subscribe(CommandEventType.EventBackup, _ => {
             Log.WriteLine("Creating backup manually", LogType.Info);
 #pragma warning disable CS4014
-            _daemon.Backup(); // Should not block thread.
+            _daemon.Backup(0, new CancellationToken(), true); // Should not block thread.
 #pragma warning restore CS4014
         });
 
         eventBus.Subscribe(CommandEventType.EventRestart, _ => {
             Log.WriteLine("Executing manual restart");
             eventBus.Publish(CommandEventType.EventRestartCallback);
-            Log.WriteLine("Restart complete", LogType.Info);
         });
 
         eventBus.Subscribe(CommandEventType.EventStat, _ => {
